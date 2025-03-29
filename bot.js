@@ -67,15 +67,17 @@ bot.start((ctx) =>
 );
 
 // Xử lý tin nhắn văn bản
-bot.on("text", async (ctx) => {
-  const userText = ctx.message.text;
-  const rawResponse = await callGemini(userText);
+bot.on("message", async (ctx) => {
+  const message = ctx.message;
 
-  const formattedText = escapeMarkdownV2(rawResponse);
+  // Bỏ qua tin nhắn từ chính bot để tránh loop
+  if (message.from.is_bot) return;
 
-  await ctx.reply(`*🤖 Gemini trả lời:*\n\n${formattedText}`, {
-    parse_mode: "MarkdownV2",
-  });
+  const userText = message.text || "";
+  const chatId = ctx.chat.id;
+
+  const response = await callGemini(userText);
+  ctx.telegram.sendMessage(chatId, `🤖 Gemini nói:\n\n${response}`);
 });
 
 // Khởi chạy bot
