@@ -2,8 +2,13 @@ require("dotenv").config();
 const { Telegraf } = require("telegraf");
 const axios = require("axios");
 
+const token =
+  process.env.NODE_ENV === "production"
+    ? process.env.TELEGRAM_BOT_TOKEN
+    : process.env.TELEGRAM_BOT_LOCAL_TOKEN;
+
 // Khởi tạo Telegram bot
-const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
+const bot = new Telegraf(token);
 
 // Hàm gọi Gemini API
 async function callGemini(promptText) {
@@ -37,6 +42,27 @@ async function callGemini(promptText) {
     return "🚨 Lỗi khi gọi Gemini API.";
   }
 }
+
+const maybeAddEmoji = (text) => {
+  const emojiList = [
+    "😄",
+    "🤖",
+    "🎉",
+    "✨",
+    "💡",
+    "📌",
+    "🔥",
+    "🧠",
+    "👍",
+    "❤️",
+  ];
+  const random = Math.random();
+
+  // 30% cơ hội thêm emoji
+  const emoji = emojiList[Math.floor(Math.random() * emojiList.length)];
+  // Chèn icon ở cuối hoặc đầu ngẫu nhiên
+  return random > 0.8 ? `${emoji} ${text}` : `${text} ${emoji}`;
+};
 
 // Xử lý khi user bắt đầu
 bot.start((ctx) =>
@@ -73,7 +99,9 @@ bot.on("message", async (ctx) => {
 
   ctx.telegram.sendMessage(
     chatId,
-    `🐱 Con mèo trắng có bộ lông đen nói cho bạn ${sender} nghe:\n\n${response}`
+    `🐱 Con mèo trắng có bộ lông đen nói cho bạn ${sender} nghe:\n\n${maybeAddEmoji(
+      response
+    )}`
   );
 });
 
