@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "node bot.js"
+    "start": "pkill -f 'node bot.js' || true && node bot.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",

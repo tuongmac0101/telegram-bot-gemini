@@ -38,29 +38,6 @@ async function callGemini(promptText) {
   }
 }
 
-// Hàm escape MarkdownV2 để tránh lỗi format Telegram
-function escapeMarkdownV2(text) {
-  return text
-    .replace(/_/g, "\\_")
-    .replace(/\*/g, "\\*")
-    .replace(/\[/g, "\\[")
-    .replace(/\]/g, "\\]")
-    .replace(/\(/g, "\\(")
-    .replace(/\)/g, "\\)")
-    .replace(/~/g, "\\~")
-    .replace(/`/g, "\\`")
-    .replace(/>/g, "\\>")
-    .replace(/#/g, "\\#")
-    .replace(/\+/g, "\\+")
-    .replace(/-/g, "\\-")
-    .replace(/=/g, "\\=")
-    .replace(/\|/g, "\\|")
-    .replace(/{/g, "\\{")
-    .replace(/}/g, "\\}")
-    .replace(/\./g, "\\.")
-    .replace(/!/g, "\\!");
-}
-
 // Xử lý khi user bắt đầu
 bot.start((ctx) =>
   ctx.reply("👋 Xin chào! Tôi là bot Gemini. Hãy hỏi gì đó nhé 😎")
@@ -76,10 +53,43 @@ bot.on("message", async (ctx) => {
   const userText = message.text || "";
   const chatId = ctx.chat.id;
 
-  const response = await callGemini(userText);
-  ctx.telegram.sendMessage(chatId, `🤖 Gemini nói:\n\n${response}`);
+  // Kiểm tra xem tin nhắn có bắt đầu bằng /gemini không
+  if (!userText.toLowerCase().startsWith("@conmeoden")) {
+    return;
+  }
+
+  // Lấy nội dung câu hỏi sau từ khóa /gemini
+  const question = userText.slice(8).trim();
+
+  if (!question) {
+    ctx.reply(
+      "Vui lòng nhập câu hỏi sau từ khóa /gemini\nVí dụ: /gemini Hôm nay thời tiết thế nào?"
+    );
+    return;
+  }
+
+  const response = await callGemini(question);
+  const sender = ctx.message.from.first_name;
+
+  ctx.telegram.sendMessage(
+    chatId,
+    `🐱 Con mèo trắng có bộ lông đen nói cho bạn ${sender} nghe:\n\n${response}`
+  );
 });
 
 // Khởi chạy bot
-bot.launch();
+bot.launch({
+  dropPendingUpdates: true,
+  allowedUpdates: ["message"],
+});
+
+// Xử lý graceful shutdown
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
+
+// Xử lý lỗi
+bot.catch((err, ctx) => {
+  console.error(`❌ Lỗi cho ${ctx.updateType}:`, err);
+});
+
 console.log("🤖 Telegram bot Gemini đang hoạt động!");
